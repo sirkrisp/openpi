@@ -9,6 +9,26 @@
 FROM ros:noetic-robot@sha256:0e12e4db836e78c74c4b04c6d16f185d9a18d2b13cf5580747efa075eb6dc6e0
 SHELL ["/bin/bash", "-c"]
 
+# 2. Import the ROS GPG key *BEFORE* adding the ROS repository
+# RUN apt-key adv --keyserver hkps://keys.openpgp.org --recv-keys F42ED6FBAB17C654
+
+
+# 1. Backup the original sources.list (Good practice)
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
+
+# 2. Replace the sources.list with the Chinese mirror
+# RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu/https:\/\/mirrors.tuna.tsinghua.edu.cn\/ubuntu/g' /etc/apt/sources.list
+# RUN sed -i 's/http:\/\/security.ubuntu.com\/ubuntu/https:\/\/mirrors.tuna.tsinghua.edu.cn\/ubuntu-security/g' /etc/apt/sources.list
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g' /etc/apt/sources.list \
+    && sed -i 's|http://security.ubuntu.com/ubuntu/|https://mirrors.tuna.tsinghua.edu.cn/ubuntu/|g' /etc/apt/sources.list
+
+# 2. Use the sjtug mirror (adjust if needed) - ROS Noetic Specific!
+# RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/ros/ubuntu/ focal main" > /etc/apt/sources.list.d/ros-noetic.list # Note: ros-noetic.list
+RUN sed -i 's|http://packages.ros.org/ros/ubuntu|http://mirrors.tuna.tsinghua.edu.cn/ros/ubuntu|g' /etc/apt/sources.list.d/ros1-latest.list
+
+# 3. Update the package list
+RUN apt-get update
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -28,9 +48,10 @@ RUN apt-get update && \
     keyboard-configuration
 
 WORKDIR /root
-RUN curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
+COPY ./examples/aloha_real/xsarm_amd64_install.sh xsarm_amd64_install.sh
+# RUN curl 'https://raw.githubusercontent.com/Interbotix/interbotix_ros_manipulators/main/interbotix_ros_xsarms/install/amd64/xsarm_amd64_install.sh' > xsarm_amd64_install.sh
 RUN chmod +x xsarm_amd64_install.sh
-RUN export TZ='America/Los_Angeles' && ./xsarm_amd64_install.sh -d noetic -n
+RUN export TZ='Asia/Shanghai' && ./xsarm_amd64_install.sh -d noetic -n
 
 COPY ./third_party/aloha /root/interbotix_ws/src/aloha
 RUN cd /root/interbotix_ws && source /opt/ros/noetic/setup.sh && source /root/interbotix_ws/devel/setup.sh && catkin_make
@@ -38,7 +59,7 @@ RUN cd /root/interbotix_ws && source /opt/ros/noetic/setup.sh && source /root/in
 # Install python 3.10 because this ROS image comes with 3.8
 RUN mkdir /python && \
     cd /python && \
-    wget https://www.python.org/ftp/python/3.10.14/Python-3.10.14.tgz && \
+    wget https://mirrors.huaweicloud.com/python/3.10.14/Python-3.10.14.tgz && \
     tar -zxvf Python-3.10.14.tgz && \
     cd Python-3.10.14 && \
     ls -lhR && \
@@ -67,4 +88,4 @@ EOF
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["python3", "/app/examples/aloha_real/main.py"]
+# CMD ["python3", "/app/examples/aloha_real/main.py"]

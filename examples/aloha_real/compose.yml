@@ -2,7 +2,7 @@
 # docker compose -f examples/aloha_real/compose.yml up --build
 services:
   runtime:
-    image: aloha_real
+    image: aloha_real:latest
     depends_on:
       - aloha_ros_nodes
       - ros_master
@@ -17,9 +17,10 @@ services:
     volumes:
       - $PWD:/app
       - ../../data:/data
+    command: ["python3", "/app/examples/aloha_real/main.py"]
 
   aloha_ros_nodes:
-    image: aloha_real
+    image: aloha_real:latest
     depends_on:
       - ros_master
     build:
@@ -41,7 +42,7 @@ services:
       - roscore
 
   openpi_server:
-    image: openpi_server
+    image: openpi_server:latest
     build:
       context: ../..
       dockerfile: scripts/docker/serve_policy.Dockerfile

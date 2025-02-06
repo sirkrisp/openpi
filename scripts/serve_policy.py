@@ -97,13 +97,19 @@ def create_policy(args: Args) -> _policy.Policy:
 
 
 def main(args: Args) -> None:
-    policy = create_policy(args)
+    print("create_policy v2")
+    try:
+        policy = create_policy(args)
+    except Exception as e:
+        logging.error("Failed to create policy: %s", e)
+    print("policy_metadata")
     policy_metadata = policy.metadata
 
     # Record the policy's behavior.
     if args.record:
         policy = _policy.PolicyRecorder(policy, "policy_records")
 
+    print("trying to get hostname")
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
     logging.info("Creating server (host: %s, ip: %s)", hostname, local_ip)
